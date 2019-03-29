@@ -255,6 +255,8 @@ CC_CHECK_FLAGS_APPEND([WARN_CFLAGS],[CFLAGS],[ \
   -Wvla \
   -Wwrite-strings \
   -Wformat-signedness \
+  -Wno-cast-function-type \
+  -Wno-error=cast-function-type \
   -fno-common \
   -fdiagnostics-show-option \
   -fno-strict-aliasing \
