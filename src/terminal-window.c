@@ -2407,13 +2407,17 @@ sync_screen_title (TerminalScreen *screen,
 {
   TerminalWindowPrivate *priv = window->priv;
   const char *title;
+  gs_free char *title_truncated = NULL;
 
   if (screen != priv->active_screen)
     return;
 
   title = terminal_screen_get_title (screen);
-  gtk_window_set_title (GTK_WINDOW (window),
-                        title && title[0] ? title : _("Terminal"));
+  if (title == NULL || title[0] == '\0')
+    title = _("Terminal");
+
+  title_truncated = g_utf8_substring (title, 0, 1024);
+  gtk_window_set_title (GTK_WINDOW (window), title_truncated);
 }
 
 static void
