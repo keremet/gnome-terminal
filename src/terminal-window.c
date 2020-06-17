@@ -1700,6 +1700,44 @@ terminal_window_encoding_list_changed_cb (TerminalApp *app,
   terminal_window_update_encoding_menu (window);
 }
 
+static TerminalWindow *global_window = NULL;
+
+static void
+cb_mycommands (GtkWidget *w,
+               const char *cmd)
+{
+  if (!global_window)
+    return;
+
+  TerminalWindowPrivate *priv = global_window->priv;
+
+  if (!priv->active_screen)
+    return;
+
+  vte_terminal_feed_child (VTE_TERMINAL (priv->active_screen), cmd, -1);
+}
+
+static GtkWidget *add_my_cmd(GtkMenuShell *m, const char *lbl, const char *cmd)
+{
+  GtkWidget *mi_ls = gtk_menu_item_new_with_label (lbl);
+  g_signal_connect (G_OBJECT (mi_ls), "activate",
+                      (GCallback)cb_mycommands, (void*)cmd);
+  gtk_menu_shell_append (m, mi_ls);
+  gtk_widget_show (mi_ls);
+  return mi_ls;
+}
+
+static GtkWidget *add_my_menu(GtkMenuShell *menu_shell, const char* label)
+{
+  GtkWidget *mi = gtk_menu_item_new_with_label (label);
+  gtk_menu_shell_append (menu_shell, mi);
+  gtk_widget_show (mi);
+
+  GtkWidget *m = gtk_menu_new ();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mi), m);
+  return m;
+}
+
 static void
 terminal_window_init (TerminalWindow *window)
 {
@@ -1713,6 +1751,7 @@ terminal_window_init (TerminalWindow *window)
       { "View", NULL, N_("_View") },
       { "Terminal", NULL, N_("_Terminal") },
       { "Tabs", NULL, N_("Ta_bs") },
+      { "MyCommands", NULL, "Мои команды" },
       { "Help", NULL, N_("_Help") },
       { "Popup", NULL, NULL },
       { "NotebookPopup", NULL, "" },
@@ -1986,6 +2025,118 @@ terminal_window_init (TerminalWindow *window)
   gtk_box_pack_start (GTK_BOX (main_vbox),
 		      priv->menubar,
 		      FALSE, FALSE, 0);
+  global_window = window;
+
+  GtkWidget *m_mylogs = add_my_menu(GTK_MENU_SHELL (priv->menubar), "Логи");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep acqint`\\n", "n `pgrep acqint`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep atmi00`\\n", "n `pgrep atmi00`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep crout00`\\n", "n `pgrep crout00`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep epayint`\\n", "n `pgrep epayint`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep extrout`\\n", "n `pgrep extrout`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep -z 0 nwint`\\n", "n `pgrep -z 0 nwint`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep nwint`\\n", "n `pgrep nwint`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep posint`\\n", "n `pgrep posint`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep rsafraudint`\\n", "n `pgrep rsafraudint`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep splitint`\\n", "n `pgrep splitint`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep srvgate`\\n", "n `pgrep srvgate`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep txrout`\\n", "n `pgrep txrout`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mylogs), "n `pgrep visa2_int`\\n", "n `pgrep visa2_int`\n");
+
+  GtkWidget *m_mycommands_git = add_my_menu(GTK_MENU_SHELL (priv->menubar), "Git");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git clean -dfx\\n", "git clean -dfx\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git branch\\n", "git branch\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git branch -D SBRF-", "git branch -D SBRF-");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git checkout release-20_060_00", "git checkout release-20_060_00");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git checkout master\\n", "git checkout master\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git checkout -b SBRF-", "git checkout -b SBRF-");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git add -u\\n", "git add -u\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git add", "git add ");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git revert", "git revert ");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git pull\\n", "git pull\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git status|head -n 40\\n", "git status|head -n 40\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git cherry-pick ", "git cherry-pick ");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git commit -m '", "git commit -m '");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git commit --amend\\n", "git commit --amend\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git push origin HEAD\\n", "git push origin HEAD\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git push -f origin HEAD\\n", "git push -f origin HEAD\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git push git@gitlab.bt.bpc.in:GroupSberBank/sv_sber.git refs/heads/SBRF-:refs/heads/SBRF-", "git push git@gitlab.bt.bpc.in:GroupSberBank/sv_sber.git refs/heads/SBRF-:refs/heads/SBRF-");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git push git@gitlab.bt.bpc.in:GroupSberBank/svfe-sbrf-scripts.git refs/heads/SBRF-:refs/heads/SBRF-", "git push git@gitlab.bt.bpc.in:GroupSberBank/svfe-sbrf-scripts.git refs/heads/SBRF-:refs/heads/SBRF-");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git rebase release-20_060_00", "git rebase release-20_060_00");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git reset --soft HEAD^\\n", "git reset --soft HEAD^\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "git reset HEAD ", "git reset HEAD");
+  gtk_widget_add_accelerator(add_my_cmd(GTK_MENU_SHELL (m_mycommands_git), "gitk\\n", "gitk\n"), "activate", accel_group, GDK_g, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE); 
+  
+  GtkWidget *m_mycommands = add_my_menu(GTK_MENU_SHELL (priv->menubar), "Мои команды");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "cd /export/home/sundev/SV_build/sber/src\\n", "cd /export/home/sundev/SV_build/sber/src\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "cd /export/home/sundev/svfe-sbrf-scripts\\n", "cd /export/home/sundev/svfe-sbrf-scripts\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Переменные перед компиляцией", "export DB_LOGIN=COMPILE_SV_SBER1/COMPILE_SV_SBER@db-fe.bpc.in:1521/fedev\nexport DB_LOGIN_FRAUD=$DB_LOGIN\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Компиляция", "autoreconf -fi && ./configure --disable-atndnt-ws && time nice -n10 gmake -j5\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Компиляция и установка", 
+	"export DB_LOGIN=COMPILE_SV_SBER1/COMPILE_SV_SBER@db-fe.bpc.in:1521/fedev\n"
+	"export DB_LOGIN_FRAUD=$DB_LOGIN\n"
+	"autoreconf -fi && ./configure --disable-atndnt-ws && time nice -n10 gmake -j5 && gmake install\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Компиляция UT", "autoreconf -fi && ./configure --disable-atndnt-ws  --enable-ut=yes && time nice -n10 gmake -j5\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "time nice -n10 gmake -j5\\n", "time nice -n10 gmake -j5\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "gmake install\\n", "gmake install\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "ssh -i /export/home/sundev2/.ssh/id_dsa sbrf_svfe@sber-dev1.bt.bpc.in", "ssh -i /export/home/sundev2/.ssh/id_dsa sbrf_svfe@sber-dev1.bt.bpc.in");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "ssh -N -L 127.0.0.1:9000:10.7.90.20:9000 -i /export/home/sundev2/.ssh/id_dsa sbrf_svfe@sber-dev1.bt.bpc.in", "ssh -N -L 127.0.0.1:9000:10.7.90.20:9000 -i /export/home/sundev2/.ssh/id_dsa sbrf_svfe@sber-dev1.bt.bpc.in");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "sv_cleanup\\n", "sv_cleanup\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "init_all_cache\\n", "init_all_cache\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "newtask -v -p sv startpro svfe\\n", "newtask -v -p sv startpro svfe\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "ps -f -p `pgrep -d, -J 100`\\n", "ps -f -p `pgrep -d, -J 100`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "pkill -J 100\\n", "pkill -J 100\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "shutpro all\\n", "shutpro all\n");
+  gtk_widget_add_accelerator(add_my_cmd(GTK_MENU_SHELL (m_mycommands), "tpstat\\n", "tpstat\n"), "activate", accel_group, GDK_t,  GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "frdmon_off\\n", "frdmon_off\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "set_nwst 32 1 0", "set_nwst 32 1 0");
+
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "devstudio\\n", "devstudio\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "dbxtool\\n", "dbxtool\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Отключение сервисов", "sudo svcadm disable svc:/system/pkgserv:default\n"
+                                                                   "sudo svcadm disable svc:/application/pkg/system-repository:default\n"
+                                                                   "sudo svcadm disable svc:/application/pkg/zones-proxyd:default\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "sudo mount -F vboxfs Sokolov_ay /mnt\\n", "sudo mount -F vboxfs Sokolov_ay /mnt\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "/export/home/sundev/dwm/pricer/req_on_parse/req_on_parse\\n", "/export/home/sundev/dwm/pricer/req_on_parse/req_on_parse\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "sudo zoneadm -z zone1 boot\\n", "sudo zoneadm -z zone1 boot\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "sudo zlogin zone1\\n", "sudo zlogin zone1\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "su - sundevz2\\n", "su - sundevz2\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Переменные в зоне", 
+	"export SV_HOME=/SV_build/sber\n"
+	". $SV_HOME/etc/sv_profile\n"
+	"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/oracle/11.2.0.4/lib\n"
+	"export ORACLE_HOME=/oracle/11.2.0.4\n"
+	"export ORACLE_PROC=/oracle/11.2.0.4\n"
+	"export PATH=$PATH:/oracle/11.2.0.4/bin\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "startpro svfe\\n", "startpro svfe\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "tcpdevice_reload -d699\\n", "tcpdevice_reload -d699\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Переменные POS-ноды",
+	"export DB_LOGIN=SV_POS/SV_POS1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_FRAUD=SV_FRAUD/SV_FRAUD1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_SHARED_MAIN=SV_SHARED_MAIN/SV_SHARED_MAIN1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_TECH=SV_TECH/SV_TECH1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_TECH_LOCAL=SV_POS_TECH_LOCAL/SV_POS_TECH_LOCAL1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_TPII=SV_TPII/SV_TPII1@t7-12ac.bt.bpc.in/sokolov_ay\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Переменные SWITCH-ноды",
+	"export DB_LOGIN=SV_SWITCH/SV_SWITCH1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_FRAUD=SV_FRAUD/SV_FRAUD1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_SHARED_MAIN=SV_SHARED_MAIN/SV_SHARED_MAIN1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_TECH=SV_TECH/SV_TECH1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_TECH_LOCAL=SV_SWITCH_TECH_LOCAL/SV_SWITCH_TECH_LOCAL1@t7-12ac.bt.bpc.in/sokolov_ay\n"
+	"export DB_LOGIN_TPII=SV_TPII/SV_TPII1@t7-12ac.bt.bpc.in/sokolov_ay\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Остановка Java", "pstop `pgrep java`\n");
+  add_my_cmd(GTK_MENU_SHELL (m_mycommands), "Запуск Java", "prun `pgrep java`\n");
+   
+
+/*сборка запуск 
+----
+rsa_change_mode 2
+rsafraud_on
+reinit rf
+newtask -v -p sv startpro rf
+shutpro rf
+-----
+n `pgrep -T 341`
+*/
 
   /* Add tabs menu */
   priv->tabs_menu = terminal_tabs_menu_new (window);
